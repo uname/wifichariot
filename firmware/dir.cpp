@@ -5,8 +5,7 @@
 static int isInited = 0;
 static Servo servo;
 static int angle = 0;
-static int offsetAngle = 0; // 将小车车头调正
-
+static int offsetAngle = 90; // 将小车车头调正
 
 void dirInit()
 {

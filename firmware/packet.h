@@ -14,7 +14,9 @@
 
 enum Commands
 {
-    SAY_HI              = 0 // For protocol testing
+    SAY_HI              = 0, // For protocol testing
+    TURN                = 1,
+    RUN                 = 2,
 };
 
 
@@ -23,18 +25,33 @@ typedef struct _SayHi
     int8_t rsv;
 } SayHi;
 
+
+typedef struct _Turn
+{
+    int8_t angle;
+} Turn;
+
+typedef struct _Run
+{
+    int16_t speed;
+} Run;
+
+
 typedef struct _Pakcet
 {
-    uint8_t  bodyLen;
+    uint8_t  size;
     uint8_t  cmd;
     union
     {
         SayHi sayHi;
+        Turn turn;
+        Run run;
     };
     uint8_t  crc;
 } Packet;
 
+void packetInit();
 int recvPakcet(Packet *packet);
-int unpack(uint8_t *buff, uint8_t bodyLen, Packet *packet);
+int unpack(uint8_t *buff, uint8_t size, Packet *packet);
 
 #endif

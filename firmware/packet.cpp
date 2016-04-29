@@ -1,13 +1,14 @@
-#define DEBUG
 #include "packet.h"
 #include "debug.h"
+#include <SoftwareSerial.h>
 
+static SoftwareSerial softSerial(6, 5); // RX, TX
 static const uint8_t START_PATTERN[] = {0xAA, 0xBB};
 static uint8_t bodyBuff[MAX_BUFF_SIZE] = {0};
 static int parttenPos = 0;
 static int recvFlag = RECV_START_FLAG;
-static int bodyLen;
-static unsigned short bodyRecved = 0;
+static int size;
+static unsigned short recvSize = 0;
 static int recvBodyTimes = 0;
 
 static unsigned long int unpacku32(unsigned char *buf)
@@ -24,12 +25,29 @@ static void unpackSayHi(Packet *packet, uint8_t *buf)
     DEBUG_PRINT("-> rsv is %d", packet->sayHi.rsv);
 }
 
-int unpack(uint8_t *buff, uint8_t bodyLen, Packet *packet)
+static void unpackTurn(Packet *packet, uint8_t *buf)
+{
+    packet->turn.angle = (int8_t)*buf;
+    DEBUG_PRINT("-> angle is %d", packet->turn.angle);
+}
+
+static void unpackRun(Packet *packet, uint8_t *buf)
+{
+    packet->run.speed = (int16_t)*buf;
+    DEBUG_PRINT("-> speed is %d", packet->run.speed);
+}
+
+void packetInit()
+{
+    softSerial.begin(115200);
+}
+
+int unpack(uint8_t *buff, uint8_t size, Packet *packet)
 {
     uint8_t *p = buff;
     int ret = 0;
     
-    (void)bodyLen;
+    (void)size;
     
     if(buff == NULL || packet == NULL)
     {
@@ -41,6 +59,14 @@ int unpack(uint8_t *buff, uint8_t bodyLen, Packet *packet)
     {
     case SAY_HI:
         unpackSayHi(packet, p);
+        break;
+    
+    case TURN:
+        unpackTurn(packet, p);
+        break;
+    
+    case RUN:
+        unpackRun(packet, p);
         break;
         
     default:
@@ -54,7 +80,7 @@ int unpack(uint8_t *buff, uint8_t bodyLen, Packet *packet)
 int recvPakcet(Packet *packet)
 {
     int ret = -1;
-    int nbytes = Serial.available();
+    int nbytes = softSerial.available();
     
     if(nbytes < 1)
     {
@@ -65,7 +91,7 @@ int recvPakcet(Packet *packet)
     {
     case RECV_START_FLAG:
         {
-            uint8_t val = (uint8_t)Serial.read();
+            uint8_t val = (uint8_t)softSerial.read();
             if(val == START_PATTERN[parttenPos])
             {
                 if(++parttenPos == sizeof(START_PATTERN))
@@ -88,8 +114,8 @@ int recvPakcet(Packet *packet)
     
     case RECV_SIZE:
         {
-            bodyLen = (uint8_t) Serial.read();
-            if(bodyLen >= MAX_BUFF_SIZE)
+            size = (uint8_t) softSerial.read();
+            if(size >= MAX_BUFF_SIZE)
             {
                 recvFlag = RECV_START_FLAG;
                 DEBUG_PRINT("error body size, clear serial");
@@ -97,16 +123,16 @@ int recvPakcet(Packet *packet)
             }
             recvFlag = RECV_BODY_DATA;
             recvBodyTimes = 0;
-            bodyRecved = 0;
-            DEBUG_PRINT("recvHead OK, bodyLen is %d", bodyLen);
+            recvSize = 0;
+            DEBUG_PRINT("recvHead OK, size is %d", size);
 
             break;
         }
     
     case RECV_BODY_DATA:
         {
-            bodyRecved +=  Serial.readBytes((char *)(bodyBuff + bodyRecved), bodyLen - bodyRecved);
-            if(bodyRecved < bodyLen)
+            recvSize +=  softSerial.readBytes((char *)(bodyBuff + recvSize), size - recvSize);
+            if(recvSize < size)
             {
                 if(++recvBodyTimes > MAX_RECV_BODY_TIMES_FOR_ONE_PKG)
                 {
@@ -118,7 +144,7 @@ int recvPakcet(Packet *packet)
             }
             else
             {
-                if(bodyRecved > bodyLen)
+                if(recvSize > size)
                 {
                     DEBUG_PRINT("ERROR!!!!!");
                 }
@@ -135,10 +161,10 @@ int recvPakcet(Packet *packet)
     case RECV_CRC:
         {
             DEBUG_PRINT("recv crc %d", nbytes);
-            uint8_t crc = Serial.read() & 0xff;
+            uint8_t crc = softSerial.read() & 0xff;
             // 暂不校验CRC
             DEBUG_PRINT("crc done");
-            ret = unpack(bodyBuff, bodyLen, packet);
+            ret = unpack(bodyBuff, size, packet);
             recvFlag = RECV_START_FLAG;
             break;
         }

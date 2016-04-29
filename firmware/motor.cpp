@@ -2,7 +2,7 @@
 #include "debug.h"
 #include <Arduino.h>
 
-static int isInited = 0;
+static bool isInited = false;
 static Servo servo;
 static int throttle;
 
@@ -18,7 +18,7 @@ void motorInit()
     
     throttle = 0;
     
-    isInited = 1;
+    isInited = true;
 }
 
 int motorGetThrottle()
