@@ -54,8 +54,11 @@ void handlePacket()
 
 static void handleSayHi(const SayHi *req)
 {
-    pinMode(13, OUTPUT);
-    digitalWrite(13, req->rsv > 0 ? HIGH : LOW);
+    for(int i = 0; i < 180; i++)
+    {
+        tone(TONE_PIN, 900 + sin(i * 3.1412 / 180) * 1800, 10);
+        delay(2);
+    }
 }
 
 static void handleTurn(const Turn *req)

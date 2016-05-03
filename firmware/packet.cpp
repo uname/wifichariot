@@ -1,8 +1,9 @@
 #include "packet.h"
+#include "pindef.h"
 #include "debug.h"
 #include <SoftwareSerial.h>
 
-static SoftwareSerial softSerial(6, 5); // RX, TX
+static SoftwareSerial softSerial(SOFT_SERIAL_RX_PIN, SOFT_SERIAL_TX_PIN); // RX, TX
 static const uint8_t START_PATTERN[] = {0xAA, 0xBB};
 static uint8_t bodyBuff[MAX_BUFF_SIZE] = {0};
 static int parttenPos = 0;
