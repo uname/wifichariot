@@ -40,7 +40,7 @@ static void unpackRun(Packet *packet, uint8_t *buf)
 
 void packetInit()
 {
-    softSerial.begin(115200);
+    softSerial.begin(57600);
 }
 
 int unpack(uint8_t *buff, uint8_t size, Packet *packet)

@@ -6,7 +6,7 @@
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(57600);
     pinMode(SIG_LED_PIN, OUTPUT);
     
     controllerInit();
@@ -27,7 +27,7 @@ void flashSigLED()
 {
     static unsigned char lightStatus = 0;
     static long lightCount = 0;
-    if( ++lightCount < 10000)
+    if( ++lightCount < 20000)
     {
         return;
     }
